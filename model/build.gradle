@@ -1,0 +1,13 @@
+archivesBaseName = 'model'
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}
+
+dependencies {
+
+}

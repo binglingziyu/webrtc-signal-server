@@ -1,0 +1,9 @@
+archivesBaseName = 'app'
+
+dependencies {
+    implementation project(":model")
+    implementation project(":util")
+
+    implementation 'com.corundumstudio.socketio:netty-socketio:1.7.18'
+
+}

@@ -1,0 +1,66 @@
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:2.3.4.RELEASE"
+    }
+}
+
+allprojects {
+    group = 'com.ihubin'
+    version = '1.0.0'
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'java-library'
+    apply plugin: 'idea'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+
+    repositories {
+        mavenCentral()
+    }
+
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+
+    sourceCompatibility = '1.8'
+
+    // java 编译的时候缺省状态下会因为中文字符而失败
+    // [compileJava,compileTestJava,javadoc]*.options*.encoding ='UTF-8'
+
+    // 默认不需要打可执行 jar 包
+    // bootJar {
+    //     enabled = false
+    // }
+
+    // 默认打 jar 包
+    // jar {
+    //     enabled = true
+    // }
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.springframework.boot:spring-boot-starter-validation'
+        implementation('ch.qos.logback:logback-classic:1.2.3')
+
+        implementation('org.apache.commons:commons-collections4:4.4')
+        implementation('org.apache.commons:commons-lang3:3.9')
+        implementation('commons-io:commons-io:2.8.0')
+        implementation('com.google.guava:guava:28.1-jre')
+        implementation('com.alibaba:fastjson:1.2.61')
+
+        compileOnly 'org.projectlombok:lombok'
+
+        annotationProcessor 'org.projectlombok:lombok'
+
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    }
+}

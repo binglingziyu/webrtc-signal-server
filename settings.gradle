@@ -1,0 +1,12 @@
+
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'webrtc-signal-server'
+
+include 'app'
+include 'model'
+include 'util'
