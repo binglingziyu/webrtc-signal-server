@@ -25,9 +25,11 @@ public class SocketIOLauncher {
      */
     @PostConstruct
     public void start() {
+        socketIOServer.addNamespace("/");
         // 监听客户端连接
         socketIOServer.addConnectListener(client -> {
             String loginUserNum = getParamsByClient(client);
+            System.out.println("New Connection!");
             if (loginUserNum != null) {
                 System.out.println(loginUserNum);
                 System.out.println("SessionId:  " + client.getSessionId());
@@ -40,6 +42,7 @@ public class SocketIOLauncher {
         // 监听客户端断开连接
         socketIOServer.addDisconnectListener(client -> {
             String loginUserNum = getParamsByClient(client);
+            System.out.println("Close Connection!");
             if (loginUserNum != null) {
                 clientMap.remove(loginUserNum);
                 System.out.println("断开连接： " + loginUserNum);
