@@ -80,7 +80,7 @@ public class SocketIOLauncher {
     private String getParamsByClient(SocketIOClient client) {
         // 从请求的连接中拿出参数（这里的loginUserNum必须是唯一标识）
         Map<String, List<String>> params = client.getHandshakeData().getUrlParams();
-        List<String> list = params.get("loginUserNum");
+        List<String> list = params.get("loginUserName");
         if (list != null && list.size() > 0) {
             return list.get(0);
         }
