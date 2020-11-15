@@ -1,7 +1,13 @@
 package com.ihubin.webrtc.signal;
 
+import com.alibaba.fastjson.JSON;
+import com.corundumstudio.socketio.HandshakeData;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
+import com.ihubin.webrtc.signal.model.CommandMessage;
+import com.ihubin.webrtc.signal.model.SignalMessage;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -11,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Component
 public class SocketIOLauncher {
 
@@ -25,37 +32,56 @@ public class SocketIOLauncher {
      */
     @PostConstruct
     public void start() {
-        socketIOServer.addNamespace("/");
+        // SocketIONamespace namespace = socketIOServer.addNamespace("/");
         // 监听客户端连接
         socketIOServer.addConnectListener(client -> {
-            String loginUserNum = getParamsByClient(client);
-            System.out.println("New Connection!");
-            if (loginUserNum != null) {
-                System.out.println(loginUserNum);
-                System.out.println("SessionId:  " + client.getSessionId());
-                System.out.println("RemoteAddress:  " + client.getRemoteAddress());
-                System.out.println("Transport:  " + client.getTransport());
-                clientMap.put(loginUserNum, client);
+            String loginUserName = getParamsByClient(client);
+            log.debug("新的连接：" + loginUserName);
+            if (StringUtils.isNotBlank(loginUserName)) {
+                if(clientMap.containsKey(loginUserName)) {
+                    log.debug("新的连接关闭了：" + loginUserName + "，用户名重复");
+                    // 重名的连接直接关闭（或者可以返回重名提示）
+                    client.disconnect();
+                    return;
+                }
+                clientMap.put(loginUserName, client);
+            } else {
+                log.debug("新的连接关闭了：" + loginUserName + "，没有用户名");
+                // 没有用户名的连接直接关闭
+                client.disconnect();
             }
         });
 
         // 监听客户端断开连接
         socketIOServer.addDisconnectListener(client -> {
-            String loginUserNum = getParamsByClient(client);
-            System.out.println("Close Connection!");
-            if (loginUserNum != null) {
-                clientMap.remove(loginUserNum);
-                System.out.println("断开连接： " + loginUserNum);
-                System.out.println("断开连接： " + client.getSessionId());
-                client.disconnect();
+            String loginUserName = getParamsByClient(client);
+            log.debug("连接断开了：" + loginUserName);
+            if (StringUtils.isNotBlank(loginUserName)) {
+                clientMap.remove(loginUserName);
+            }
+            client.disconnect();
+        });
+
+        // 处理命令的事件
+        socketIOServer.addEventListener("command", CommandMessage.class, (client, data, ackSender) -> {
+            HandshakeData handshakeData = client.getHandshakeData();
+            log.debug( "客户端命令：" + data);
+            switch (data.getCommand()) {
+                case "userList":
+                    client.sendEvent("userList", JSON.toJSONString(clientMap.keySet()));
+                    break;
+                case "broadcast":
+                    socketIOServer.getBroadcastOperations().sendEvent("broadcast", JSON.toJSONString(clientMap.keySet()));
+                    break;
+                default:
+                    break;
             }
         });
 
-        // 处理自定义的事件，与连接监听类似
-        socketIOServer.addEventListener("text", String.class, (client, data, ackSender) -> {
-            // TODO do something
-            client.getHandshakeData();
-            System.out.println( " 客户端：************ " + data);
+        // 处理消息的事件
+        socketIOServer.addEventListener("message", SignalMessage.class, (client, data, ackSender) -> {
+            HandshakeData handshakeData = client.getHandshakeData();
+            log.debug( "客户端消息：" + data);
         });
 
         socketIOServer.start();
@@ -74,8 +100,8 @@ public class SocketIOLauncher {
 
     /**
      * 此方法为获取client连接中的参数，可根据需求更改
-     * @param client
-     * @return
+     * @param client SocketIOClient
+     * @return String
      */
     private String getParamsByClient(SocketIOClient client) {
         // 从请求的连接中拿出参数（这里的loginUserNum必须是唯一标识）
