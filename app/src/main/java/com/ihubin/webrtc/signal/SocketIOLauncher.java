@@ -68,10 +68,10 @@ public class SocketIOLauncher {
             log.debug( "客户端命令：" + data);
             switch (data.getCommand()) {
                 case "userList":
-                    client.sendEvent("userList", JSON.toJSONString(clientMap.keySet()));
+                    client.sendEvent("userList", JSON.toJSON(clientMap.keySet()));
                     break;
                 case "broadcast":
-                    socketIOServer.getBroadcastOperations().sendEvent("broadcast", JSON.toJSONString(clientMap.keySet()));
+                    socketIOServer.getBroadcastOperations().sendEvent("broadcast", JSON.toJSON(clientMap.keySet()));
                     break;
                 default:
                     break;
@@ -82,6 +82,7 @@ public class SocketIOLauncher {
         socketIOServer.addEventListener("message", SignalMessage.class, (client, data, ackSender) -> {
             HandshakeData handshakeData = client.getHandshakeData();
             log.debug( "客户端消息：" + data);
+
         });
 
         socketIOServer.start();
