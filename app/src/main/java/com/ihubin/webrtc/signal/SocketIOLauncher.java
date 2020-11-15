@@ -15,13 +15,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SocketIOLauncher {
 
     // 用来存已连接的客户端
-    private static Map<String, SocketIOClient> clientMap = new ConcurrentHashMap<>();
+    private static final Map<String, SocketIOClient> clientMap = new ConcurrentHashMap<>();
 
     @Resource
     private SocketIOServer socketIOServer;
 
     /**
-     * Spring IoC 容器创建之后，在加载 SocketIOServiceImpl Bean 之后启动
+     * Spring IoC 容器创建之后，在加载 SocketIOLauncher Bean 之后启动
      */
     @PostConstruct
     public void start() {
@@ -52,7 +52,7 @@ public class SocketIOLauncher {
         });
 
         // 处理自定义的事件，与连接监听类似
-        socketIOServer.addEventListener("text", Object.class, (client, data, ackSender) -> {
+        socketIOServer.addEventListener("text", String.class, (client, data, ackSender) -> {
             // TODO do something
             client.getHandshakeData();
             System.out.println( " 客户端：************ " + data);
@@ -62,7 +62,7 @@ public class SocketIOLauncher {
     }
 
     /**
-     * Spring IoC 容器在销毁 SocketIOServiceImpl Bean 之前关闭,避免重启项目服务端口占用问题
+     * Spring IoC 容器在销毁 SocketIOLauncher Bean 之前关闭,避免重启项目服务端口占用问题
      */
     @PreDestroy
     public void stop() {
