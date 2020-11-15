@@ -1,0 +1,58 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ master ]
+#  pull_request:
+#    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - name: Send Start Message
+        run: |
+          curl 'https://oapi.dingtalk.com/robot/send?access_token=8ce852b3bafd837bc8e06241642262739c699c30613e58aa57f025ae4be7c31a' \
+          -H 'Content-Type: application/json' \
+          -d '{"msgtype": "text", "text": {"content": "webrtc-signal-server CI 开始运行"}}'
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '8.0.232' # The JDK version to make available on the path.
+          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
+
+      - name: pwd
+        run: pwd
+
+      - name: restore .gradle cache
+        run: mkdir -p /opt/docker/github-runner/webrtc-signal-server/.gradle && rm -rf ./.gradle && mv /opt/docker/github-runner/webrtc-signal-server/.gradle ./.gradle
+
+      - name: chmod +x ./gradlew
+        run: chmod +x ./gradlew
+
+      - name: gradle bootJar
+        run: ./gradlew -g /github/workspace/.gradle clean assemble
+
+      - name: update .gradle cache
+        run: rm -rf /opt/docker/github-runner/webrtc-signal-server/.gradle && mv ./.gradle /opt/docker/github-runner/webrtc-signal-server/.gradle
+
+      - name: Send Finish Message
+        run: |
+          curl 'https://oapi.dingtalk.com/robot/send?access_token=8ce852b3bafd837bc8e06241642262739c699c30613e58aa57f025ae4be7c31a' \
+          -H 'Content-Type: application/json' \
+          -d '{"msgtype": "text", "text": {"content": "webrtc-signal-server CI 完成"}}'
+      - name: ls ./app
+        run: ls -al ./app
+
+      - name: docker stop webrtc-signal-server
+        run: docker stop webrtc-signal-server
+
+      - name: rm app-1.0.0.jar
+        run: rm -f /opt/docker/java/webrtc-signal-server/app-1.0.0.jar
+
+      - name: mv jar
+        run: cp ./app/build/libs/app-1.0.0.jar /opt/docker/java/webrtc-signal-server
+
+      - name: docker start webrtc-signal-server
+        run: docker start webrtc-signal-server
