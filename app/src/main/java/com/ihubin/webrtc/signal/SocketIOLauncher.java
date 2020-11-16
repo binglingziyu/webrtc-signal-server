@@ -45,6 +45,9 @@ public class SocketIOLauncher {
                     return;
                 }
                 clientMap.put(loginUserName, client);
+                // 连接成功，发送在线用户列表
+                socketIOServer.getBroadcastOperations().sendEvent("userList", JSON.toJSON(clientMap.keySet()));
+                //client.sendEvent("userList", JSON.toJSON(clientMap.keySet()));
             } else {
                 log.debug("新的连接关闭了：" + loginUserName + "，没有用户名");
                 // 没有用户名的连接直接关闭
@@ -60,15 +63,26 @@ public class SocketIOLauncher {
                 clientMap.remove(loginUserName);
             }
             client.disconnect();
+            socketIOServer.getBroadcastOperations().sendEvent("userList", JSON.toJSON(clientMap.keySet()));
         });
 
         // 处理命令的事件
         socketIOServer.addEventListener("command", CommandMessage.class, (client, data, ackSender) -> {
             HandshakeData handshakeData = client.getHandshakeData();
             log.debug( "客户端命令：" + data);
-            switch (data.getCommand()) {
-                case "userList":
+            switch (data.getType()) {
+                case "getUserList":
                     client.sendEvent("userList", JSON.toJSON(clientMap.keySet()));
+                    break;
+                case "userContact":
+                    String toUserName = data.getPayload();
+                    SocketIOClient toClient = clientMap.get(toUserName);
+                    toClient.sendEvent("userContact", getParamsByClient(client));
+                    break;
+                case "call":
+                    String callUserName = data.getPayload();
+                    SocketIOClient callClient = clientMap.get(callUserName);
+                    callClient.sendEvent("call", getParamsByClient(client));
                     break;
                 case "broadcast":
                     socketIOServer.getBroadcastOperations().sendEvent("broadcast", JSON.toJSON(clientMap.keySet()));
@@ -82,7 +96,9 @@ public class SocketIOLauncher {
         socketIOServer.addEventListener("message", SignalMessage.class, (client, data, ackSender) -> {
             HandshakeData handshakeData = client.getHandshakeData();
             log.debug( "客户端消息：" + data);
-
+            String contactTo = data.getContactTo();
+            SocketIOClient callClient = clientMap.get(contactTo);
+            callClient.sendEvent("message", JSON.toJSON(data));
         });
 
         socketIOServer.start();
