@@ -5,6 +5,8 @@ import lombok.Data;
 @Data
 public class CommandMessage {
 
-    private String command;
+    private String type;
+
+    private String payload;
 
 }

@@ -7,6 +7,14 @@ public class SignalMessage {
 
     private String type;
 
-    private String content;
+    private String contactTo;
+
+    private String sdp;
+
+    private String id;
+
+    private String label;
+
+    private String candidate;
 
 }
